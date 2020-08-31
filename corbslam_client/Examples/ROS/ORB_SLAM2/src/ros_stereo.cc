@@ -50,6 +50,7 @@ public:
 
 int main(int argc, char **argv)
 {
+    // wrong
     ros::init(argc, argv, "RGBD");
     ros::start();
 

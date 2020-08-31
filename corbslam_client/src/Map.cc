@@ -70,7 +70,7 @@ namespace ORB_SLAM2 {
             mvpReferenceMapPoints.push_back(tmp);
         }
     }
-
+    // 获取map中的所有KF
     vector<KeyFrame *> Map::GetAllKeyFrames() {
         unique_lock<mutex> lock(mMutexKFs);
         return vector<KeyFrame *>(mspKeyFrames.begin(), mspKeyFrames.end());
@@ -80,12 +80,12 @@ namespace ORB_SLAM2 {
         unique_lock<mutex> lock(mMutexMPs);
         return vector<MapPoint *>(mspMapPoints.begin(), mspMapPoints.end());
     }
-
+    // 获取map中地图点的数目 
     long unsigned int Map::MapPointsInMap() {
         unique_lock<mutex> lock(mMutexMPs);
         return mspMapPoints.size();
     }
-
+    // 获取map中KF的数目
     long unsigned int Map::KeyFramesInMap() {
         unique_lock<mutex> lock(mMutexKFs);
         return mspKeyFrames.size();

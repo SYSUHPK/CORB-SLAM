@@ -18,9 +18,9 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "Converter.h"
 
+// 其实就是各种矩阵格式的转化
 namespace ORB_SLAM2
 {
 

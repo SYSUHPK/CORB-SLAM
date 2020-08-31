@@ -48,7 +48,7 @@ Tracking::Tracking(System *pSys, Cache* pCacher, FrameDrawer *pFrameDrawer, MapD
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mnLastRelocFrameId(0)
 {
     // Load camera parameters from settings file
-
+    // 加载相机的内参
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
     float fx = fSettings["Camera.fx"];
     float fy = fSettings["Camera.fy"];
@@ -114,7 +114,8 @@ Tracking::Tracking(System *pSys, Cache* pCacher, FrameDrawer *pFrameDrawer, MapD
     int nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
-
+    // ORB特征提取对象mpORBextractorLeft
+    // 相机为RGBD相机时只新建以下对象，相机为双目时建立了右图提取对象，单目时新建了双倍特征提取的对象
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     if(sensor==System::STEREO)
@@ -202,12 +203,12 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     return mCurrentFrame.mTcw.clone();
 }
 
-
+// 彩色图像和深度图像格式变换，新建当前帧mCurrentFrame ，进入跟踪程序Track(),返回当前帧位姿
 cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp)
 {
     mImGray = imRGB;
     cv::Mat imDepth = imD;
-
+    // 根据通道对彩色图进行调整
     if(mImGray.channels()==3)
     {
         if(mbRGB)
@@ -222,10 +223,10 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
         else
             cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
     }
-
+    // 调整深度图
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
         imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
-
+    // 对当前帧进行处理
     mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpCacher->getMpVocabulary(),mK,mDistCoef,mbf,mThDepth);
 
     Track();
@@ -265,6 +266,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
 void Tracking::Track()
 {
+    // 判断是否初始化，没有则进行初始化
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;
@@ -273,6 +275,7 @@ void Tracking::Track()
     mLastProcessedState=mState;
 
     // Get Map Mutex -> Map cannot be changed
+    // 小修改,多调用了一层
     unique_lock<mutex> lock(mpCacher->getMpMap()->mMutexMapUpdate);
 
     if(mState==NOT_INITIALIZED)
@@ -283,39 +286,48 @@ void Tracking::Track()
             MonocularInitialization();
 
         mpFrameDrawer->Update(this);
-
+        // 初始化会改变mState的状态
         if(mState!=OK)
             return;
     }
+    // 进入跟踪
     else
     {
         // System is initialized. Track Frame.
         bool bOK;
 
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
+        // 纯定位和建图两种工作模式，位姿跟踪器通过成员变量mbOnlyTracking来进行区分
         if(!mbOnlyTracking)
         {
             // Local Mapping is activated. This is the normal behaviour, unless
             // you explicitly activate the "only tracking" mode.
-
+            // 当系统状态mState处于OK时， 意味着当前的视觉里程计成功地跟上了相机的运动
             if(mState==OK)
             {
                 // Local Mapping might have changed some MapPoints tracked in last frame
+                //局部地图线程有可能已经改变了部分地图点，因此需要进行检查
                 CheckReplacedInLastFrame();
-
+                // 备选关键帧定位
+                // 意味着上一帧可能进行了重定位，所以机器人的速度估计丢失了，帧ID也可能因为重定位而向前发生了跳转。
+                // 此时再用匀速运动模型来估计位姿就显得不合适了，所以要从参考关键帧上估计位姿
                 if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
                 {
                     bOK = TrackReferenceKeyFrame();
                 }
                 else
                 {
+                    // 运动模型
                     bOK = TrackWithMotionModel();
+                    // 如果匀速运动模型失效了，可以先通过TrackReferenceKeyFrame补救一下。若仍然无法成功估计位姿，意味着我们跟丢了，需要进行重定位。
                     if(!bOK)
+                        //备选关键帧定位
                         bOK = TrackReferenceKeyFrame();
                 }
             }
             else
             {
+                //重定位
                 bOK = Relocalization();
             }
 
@@ -408,6 +420,9 @@ void Tracking::Track()
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
+            // 当得到初始的位姿后，通过TrackLocalMap（）使当前帧与局部地图产生更多约束（联系）
+            // 局部地图的更新以及相机位姿的进一步优化工作，它将返回一个布尔数据表示更新和优化工作是否成功
+            // 局部变量bOK是一个布尔类型的数据，它反映了是否成功的估计了相机位姿，若没有则意味着当前视觉里程计跟丢了，再进行局部地图更新就没有意义
             if(bOK && !mbVO)
                 bOK = TrackLocalMap();
         }
@@ -419,6 +434,7 @@ void Tracking::Track()
         // Update drawer
         mpFrameDrawer->Update(this);
         // If tracking were good, check if we insert a keyframe
+        // 跟踪正常，检查是否需要插入KF
         if(bOK)
         {
             // Update motion model
@@ -437,6 +453,7 @@ void Tracking::Track()
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)
             {
+                // 小修改
                 MapPoint* pMP = mCurrentFrame.mvpMapPoints[i].getMapPoint();
                 if(pMP)
                     if(pMP->Observations()<1)
@@ -460,6 +477,7 @@ void Tracking::Track()
             // pass to the new keyframe, so that bundle adjustment will finally decide
             // if they are outliers or not. We don't want next frame to estimate its position
             // with those points so we discard them in the frame.
+            // 小修改
             for(int i=0; i<mCurrentFrame.N;i++)
             {
                 if(mCurrentFrame.mvpMapPoints[i].getMapPoint() && mCurrentFrame.mvbOutlier[i])
@@ -469,6 +487,7 @@ void Tracking::Track()
         // Reset if the camera get lost soon after initialization
         if(mState==LOST)
         {
+            // 小修改
             if(mpCacher->getMpMap()->KeyFramesInMap()<=5)
             {
                 cout << "Track lost soon after initialisation, reseting..." << endl;

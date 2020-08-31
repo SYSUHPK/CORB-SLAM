@@ -1,7 +1,7 @@
 //
 // Created by lifu on 17-2-1.
 //
-
+// 新增
 #include "System.h"
 #include "Cache.h"
 #include "LightKeyFrame.h"
@@ -9,7 +9,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
-
+// 轻量级的关键帧
 namespace ORB_SLAM2 {
 
     LightKeyFrame::LightKeyFrame() : mnId(0), mpCache(nullptr)  {

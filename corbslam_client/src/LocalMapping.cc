@@ -55,17 +55,20 @@ namespace ORB_SLAM2 {
             // Check if there are keyframes in the queue
             if (CheckNewKeyFrames()) {
                 // BoW conversion and insertion in Map
-
+                // 处理新的关键帧（计算BOW向量并将关键帧插入地图）
                 ProcessNewKeyFrame();
 
                 // Check recent MapPoints
+                // 检查最近添加的地图点，剔除不符合要求的点
                 MapPointCulling();
 
                 // Triangulate new MapPoints
+                // 三角化新添加的地图点
                 CreateNewMapPoints();
 
                 if (!CheckNewKeyFrames()) {
                     // Find more matches in neighbor keyframes and fuse point duplications
+                    // 在邻近关键帧中寻找更多的匹配（新地图点－邻近关键帧）
                     SearchInNeighbors();
                 }
 

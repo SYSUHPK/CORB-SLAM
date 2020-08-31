@@ -37,15 +37,15 @@ int main(int argc, char **argv)
     // Create MapFusion system. It initializes all system threads and gets ready to process frames.
 
     std::string strSettingPath = argv[2];
-
+    // mapfusion 对象
     MapFusion* mapfusion = new MapFusion( strSettingPath );
 
     mapfusion->loadORBVocabulary( argv[1] );
 
     mapfusion->createKeyFrameDatabase();
-
+    // 订阅服务
     ros::NodeHandle n;
-
+    // 类方法  http://wiki.ros.org/cn/roscpp_tutorials/Tutorials/UsingClassMethodsAsCallbacks
     ros::ServiceServer InsertKeyFrameService = n.advertiseService("insertKeyFrameToMap", &MapFusion::insertKeyFrameToMap, mapfusion );
 
     ros::ServiceServer InsertMapPointService = n.advertiseService("insertMapPointToMap", &MapFusion::insertMapPointToMap, mapfusion);
@@ -55,10 +55,11 @@ int main(int argc, char **argv)
     ros::ServiceServer updateMapPointToMapService = n.advertiseService("updateMapPointToMap", &MapFusion::updateMapPointToMap, mapfusion);
 
     ROS_INFO("Publish services finished !");
-
+    // 订阅的线程，map2map
     std::thread * mapFuisonThread = new thread(&MapFusion::fuseSubMapToMap, mapfusion);
 
     // publish update keyframe and mappoint poses topic
+    // 发布的线程，会调用mapfusion -> server map -> pubtoclient
     std::thread * pubThread = new thread(&MapFusion::runPubTopic, mapfusion);
 
     // wait to get subcribe new keyframes or new mappoints

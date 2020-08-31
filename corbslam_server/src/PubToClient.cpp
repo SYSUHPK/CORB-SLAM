@@ -5,6 +5,7 @@
 #include "corbslam_client/corbslam_message.h"
 #include "PubToClient.h"
 
+// 数据发送到client端
 namespace CORBSLAM_SERVER{
 
     PubToClient::PubToClient(Cache * pCache) {

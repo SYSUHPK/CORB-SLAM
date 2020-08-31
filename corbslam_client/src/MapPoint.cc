@@ -414,7 +414,7 @@ namespace ORB_SLAM2 {
         else
             return -1;
     }
-
+    // 小修改
     bool MapPoint::IsInKeyFrame(KeyFrame *pKF) {
         unique_lock<mutex> lock(mMutexFeatures);
         LightKeyFrame tLKF(pKF);

@@ -16,7 +16,7 @@ namespace CORBSLAM_SERVER{
         this->pMap = tMap;
 
     }
-
+    // 从DB中检测mapfusion的候选帧
     std::vector<KeyFrame*> ServerMap::DetectMapFusionCandidatesFromDB(KeyFrame *tKF) {
 
         // get the map candidates from the serverMap in tKF using DBoW method

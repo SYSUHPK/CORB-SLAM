@@ -33,28 +33,32 @@
 
 using namespace std;
 
+// 事实上只修改了这一部分，但是还有问题
 void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
                 vector<string> &vstrImageRight, vector<double> &vTimestamps);
 
 int main(int argc, char **argv)
 {
+    // hints 有问题
     if(argc != 5)
     {
         cerr << endl << "Usage: ./stereo_kitti path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
-
+    // client
     ros::init(argc, argv, "corbslam_client_"+string(argv[4]) );
 
     // Retrieve paths to images
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimestamps;
+    // 加载图片
     LoadImages(string(argv[3]), vstrImageLeft, vstrImageRight, vTimestamps);
 
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    // clientId
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true, boost::lexical_cast<int>(argv[4]) );
 
     // Vector for tracking time statistics
@@ -93,6 +97,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the images to the SLAM system
+        // 传递images给SLAM
         SLAM.TrackStereo(imLeft,imRight,tframe);
 
 #ifdef COMPILEDWITHC11
@@ -123,6 +128,7 @@ int main(int argc, char **argv)
     SLAM.Shutdown();
 
     // Tracking time statistics
+    // 计算时间开销
     sort(vTimesTrack.begin(),vTimesTrack.end());
     float totaltime = 0;
     for(int ni=0; ni<nImages; ni++)

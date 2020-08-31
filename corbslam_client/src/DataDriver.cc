@@ -1,14 +1,14 @@
 //
 // Created by lifu on 2/15/17.
 //
-
+// 新增
 #include "DataDriver.h"
 #include "sstream"
 #include "ros/ros.h"
 #include "time.h"
 
 using namespace std;
-
+// 其实就是单方向的从client到server的service实现
 namespace ORB_SLAM2 {
 
     DataDriver::DataDriver(Cache *pCache) {
@@ -131,7 +131,7 @@ namespace ORB_SLAM2 {
         }
 
     }
-
+    // ros service client
     void DataDriver::insertNewKeyFramesToServer( std::set<LightKeyFrame> newInsertedKFs ) {
 
         ros::NodeHandle n;

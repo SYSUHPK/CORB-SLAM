@@ -27,7 +27,7 @@ namespace CORBSLAM_SERVER{
         std::vector<KeyFrame*> DetectMapFusionCandidatesFromDB(KeyFrame * tKF);
 
         void clear();
-
+    // 写错了
     public:
 
         Cache * pCacher;

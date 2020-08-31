@@ -1,7 +1,7 @@
 //
 // Created by lifu on 17-1-31.
 //
-
+// 新增
 #include "System.h"
 #include "Cache.h"
 #include "Converter.h"
@@ -33,7 +33,9 @@ namespace ORB_SLAM2 {
         pClientId = -1;
 
     }
-
+    // 以下几个函数都是从ORBSLAM2中直接分离出来
+    // 其实就是把ORBSLAM2中的加载ORB构造成了函数
+    // 加载ORB词典
     bool Cache::loadORBVocabulary(const string &strVocFile) {
 
         //Load ORB Vocabulary
@@ -52,18 +54,18 @@ namespace ORB_SLAM2 {
         return bVocLoad;
 
     }
-
+    // 创建KF数据库，这里实际上是引用传递
     void Cache::createKeyFrameDatabase() {
         //Create KeyFrame Database
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
     }
-
+    // 创建地图对象
     void Cache::createMap() {
         //Create the Map
         mpMap = new Map();
     }
-
+    // 也是插入KF到Map，只是多了一些东西s
     void Cache::AddKeyFrameToMap(KeyFrame *pKF) {
 
             {
@@ -86,7 +88,7 @@ namespace ORB_SLAM2 {
             }
 
     }
-
+    // 从server中添加KF
     void Cache::AddKeyFrameFromServer(KeyFrame *pKF) {
         {
             // add KeyFrame to the LinghtKeyFrame to KeyFrame map
@@ -104,7 +106,7 @@ namespace ORB_SLAM2 {
         }
 
     }
-
+    // 从server中添加地图点
     void Cache::AddMapPointFromServer(MapPoint *pMP) {
 
         mpMap->AddMapPoint(pMP);
@@ -114,7 +116,7 @@ namespace ORB_SLAM2 {
         lMPToMPmap[pMP->mnId] = pMP;
 
     }
-
+    // 从map中擦除KF
     void Cache::EraseKeyFrameFromMap(KeyFrame *pKF) {
 
         // erase KeyFrame to the LinghtKeyFrame to KeyFrame
@@ -128,7 +130,7 @@ namespace ORB_SLAM2 {
         mpMap->EraseKeyFrame(pKF);
 
     }
-
+    // 添加地图点到map
     void Cache::AddMapPointToMap(MapPoint *pMP) {
 
             mpMap->AddMapPoint(pMP);
@@ -143,7 +145,7 @@ namespace ORB_SLAM2 {
             }
 
     }
-
+    // 从map中擦除地图点
     void Cache::EraseMapPointFromMap(MapPoint *pMP) {
 
         {
@@ -159,7 +161,7 @@ namespace ORB_SLAM2 {
     std::map<long unsigned int, MapPoint *> Cache::getlMPToMPmap() {
         return lMPToMPmap;
     }
-
+    // 根据ID获取KF
     KeyFrame *Cache::getKeyFrameById(long unsigned int pId) {
 
         if (pId <= 0) return nullptr;
@@ -177,7 +179,7 @@ namespace ORB_SLAM2 {
         }
         return pKF;
     }
-
+    // 判断KF是否在cache中
     bool Cache::KeyFrameInCache(long unsigned int pID) {
 
         if (kfStatus.find(pID) != kfStatus.end())
@@ -186,7 +188,7 @@ namespace ORB_SLAM2 {
         return false;
 
     }
-
+    // 根据ID获取地图点
     MapPoint *Cache::getMapPointById(long unsigned int pId) {
 
         if (pId <= 0) return nullptr;
@@ -203,23 +205,23 @@ namespace ORB_SLAM2 {
         return pMP;
 
     }
-
+    // 从地图中获取所有的地图点
     std::vector<MapPoint *> Cache::GetAllMapPointsFromMap() {
         return mpMap->GetAllMapPoints();
     }
-
+    // 设置参考地图点到map
     void Cache::SetReferenceMapPointsToMap(std::vector<MapPoint *> pLocalMapPoints) {
         mpMap->SetReferenceMapPoints(pLocalMapPoints);
     }
-
+    // 设置初始的mvpKF
     void Cache::SetmvpKeyFrameOrigins(KeyFrame *pKF) {
         mpMap->mvpKeyFrameOrigins.push_back(pKF);
     }
-
+    // 获取mvpKF
     vector<KeyFrame *> Cache::getmvpKeyFrameOrigins() {
         return mpMap->mvpKeyFrameOrigins;
     }
-
+    // 添加更新的KF
     void Cache::addUpdateKeyframe(KeyFrame *tKF) {
         if (tKF) {
             if (tKF->getFixed())
@@ -232,7 +234,7 @@ namespace ORB_SLAM2 {
             }
         }
     }
-
+    // 添加更新的地图点
     void Cache::addUpdateMapPoint(MapPoint *tMP) {
 
         if (tMP) {
@@ -246,19 +248,19 @@ namespace ORB_SLAM2 {
             }
         }
     }
-
+    // 从map中获取KF的数目
     const int Cache::getKeyFramesInMap() {
         return mpMap->KeyFramesInMap();
     }
-
+    // 从map中获取KF
     vector<KeyFrame *> Cache::getAllKeyFramesInMap() {
         return mpMap->GetAllKeyFrames();
     }
-
+    // 获取map中最大的KF id
     long unsigned int Cache::GetMaxKFidInMap() {
         return mpMap->GetMaxKFid();
     }
-
+    // 清空map
     void Cache::clearMap() {
 
         mpMap->clear();
@@ -271,33 +273,33 @@ namespace ORB_SLAM2 {
         tmpKFMap.clear();
         kfStatus.clear();
     }
-
+    // 从DB中擦除某一个KF
     void Cache::EraseKeyFrameFromDB(KeyFrame *pKF) {
         mpKeyFrameDatabase->erase(pKF);
     }
-
+    // 从DB中检测重定位的候选帧
     vector<KeyFrame *> Cache::DetectRelocalizationCandidatesFromDB(Frame *F) {
 
         return mpKeyFrameDatabase->DetectRelocalizationCandidates(F);
 
     }
-
+    // 从DB中检测闭环候选帧
     vector<KeyFrame *> Cache::DetectLoopCandidatesFromDB(KeyFrame *pKF, float minScore) {
         return mpKeyFrameDatabase->DetectLoopCandidates(pKF, minScore);
     }
-
+    // 清除KFDB
     void Cache::clearKeyframeDatabase() {
 
         mpKeyFrameDatabase->clear();
     }
 
-
+    // 添加KF到DB
     void Cache::addKeyFrametoDB(KeyFrame *pKF) {
 
         mpKeyFrameDatabase->add(pKF);
 
     }
-
+    // 保存地图
     void Cache::SaveMap(const string &filename) {
         // save Map to files
         std::ofstream ofs("savetest.txt");
@@ -306,7 +308,7 @@ namespace ORB_SLAM2 {
         ofs.close();
 
     }
-
+    // 加载map
     void Cache::LoadMap(const string &filename) {
         // loadMap to files
 
@@ -318,7 +320,7 @@ namespace ORB_SLAM2 {
     }
 
     /*  cache organize function   */
-
+    // 将cache中更新传递给server，这是通过ros的service做到的
     void Cache::runUpdateToServer() {
 
 
@@ -373,7 +375,7 @@ namespace ORB_SLAM2 {
 
         SetFinish();
     }
-
+    // 插入新的KF到server
     void Cache::insertNewKeyFramesToServer(std::set<LightKeyFrame> tInsertKFs) {
 
         ROS_INFO("CacheUpdate : update KFs to server");
@@ -383,7 +385,7 @@ namespace ORB_SLAM2 {
         DB.insertNewKeyFramesToServer(tInsertKFs);
 
     }
-
+    // 插入新的地图点到server
     void Cache::insertNewMapPointsToServer(std::set<LightMapPoint> tInsertMPs) {
 
         ROS_INFO("CacheUpdate : update MPs to server");
@@ -393,7 +395,7 @@ namespace ORB_SLAM2 {
         DB.insertNewMapPointsToServer(tInsertMPs);
 
     }
-
+    // 更新KF位姿给server
     void Cache::updateKeyFramePosesToServer(std::set<LightKeyFrame> tUpdateKFs) {
 
         ROS_INFO("CacheUpdate : update poses of KFs to server");
@@ -403,7 +405,7 @@ namespace ORB_SLAM2 {
         DB.updateKeyFramePosesToServer(tUpdateKFs);
 
     }
-
+    // 更新地图点位姿给server
     void Cache::updateMapPointPosesToServer(std::set<LightMapPoint> tUpdateMPs) {
 
         ROS_INFO("CacheUpdate : update poses of MPs to server");
@@ -414,7 +416,7 @@ namespace ORB_SLAM2 {
 
 
     }
-
+    // 使用pub-sub模式从server中获取数据
     void Cache::runSubFromServer() {
 
         //TODO: sub using ROS SUB
@@ -442,7 +444,7 @@ namespace ORB_SLAM2 {
         ros::spin();
 
     }
-
+    // 从server中订阅新插入的KF
     void Cache::subNewInsertKeyFramesFromServer(const corbslam_client::corbslam_message::ConstPtr &msg) {
 
         ROS_INFO("sub New Insert KeyFrames From Server");
@@ -490,7 +492,7 @@ namespace ORB_SLAM2 {
         elementVec.clear();
 
     }
-
+    // 从server中订阅新插入的地图点
     void Cache::subNewInsertMapPointFromServer(const corbslam_client::corbslam_message::ConstPtr &msg) {
 
         ROS_INFO("sub New Insert MapPoint From Server");
@@ -541,7 +543,7 @@ namespace ORB_SLAM2 {
         elementVec.clear();
 
     }
-
+    // 订阅更新的KFpose
     void Cache::subUpdatedKeyFramesPose(const corbslam_client::corbslam_message::ConstPtr &msg) {
 
         ROS_INFO("sub Updated KeyFrames Pose");
@@ -585,7 +587,7 @@ namespace ORB_SLAM2 {
         elementVec.clear();
 
     }
-
+    // 订阅更新的地图点pose
     void Cache::subUpdatedMapPointsPose(const corbslam_client::corbslam_message::ConstPtr &msg) {
 
         ROS_INFO("sub Updated MapPoints Pose");
@@ -633,7 +635,7 @@ namespace ORB_SLAM2 {
 
     }
 
-
+    // 插入临时KF
     void Cache::insertTmpKeyFrame(KeyFrame *pKF) {
 
         if (pKF) {
@@ -645,7 +647,7 @@ namespace ORB_SLAM2 {
         }
 
     }
-
+    // 擦除临时KF
     void Cache::eraseTmpKeyFrame(long unsigned int pID) {
         unique_lock<mutex> lock(mMutexTmpKFMap);
         if (tmpKFMap.find(pID) != tmpKFMap.end()) {
@@ -655,34 +657,34 @@ namespace ORB_SLAM2 {
         }
     }
 
-
+    // 
     bool Cache::isStopped() {
         unique_lock<mutex> lock(mMutexStop);
         return mbStopped;
     }
-
+    // 
     bool Cache::CheckFinish() {
         unique_lock<mutex> lock(mMutexFinish);
         return mbFinishRequested;
     }
-
+    // 
     void Cache::SetFinish() {
         unique_lock<mutex> lock(mMutexFinish);
         mbFinished = true;
         unique_lock<mutex> lock2(mMutexStop);
         mbStopped = true;
     }
-
+    // 
     void Cache::RequestFinish() {
         unique_lock<mutex> lock(mMutexFinish);
         mbFinishRequested = true;
     }
-
+    // 
     bool Cache::isFinished() {
         unique_lock<mutex> lock(mMutexFinish);
         return mbFinished;
     }
-
+    // 
     bool Cache::Stop() {
         unique_lock<mutex> lock(mMutexStop);
         if (mbStopRequested && !mbNotStop) {

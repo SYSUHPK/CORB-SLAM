@@ -19,7 +19,7 @@
 #include "Optimizer.h"
 
 #include "GlobalOptimize.h"
-
+// 全局优化
 namespace CORBSLAM_SERVER{
 
     GlobalOptimize::GlobalOptimize(ServerMap *tgm) {

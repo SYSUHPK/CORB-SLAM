@@ -60,16 +60,20 @@ void LoopClosing::Run()
     while(1)
     {
         // Check if there are keyframes in the queue
+        // 检查是否有关键帧
         if(CheckNewKeyFrames())
         {
             // Detect loop candidates and check covisibility consistency
+            // 检测loop的候选帧，检查共视图
             if(DetectLoop())
             {
                // Compute similarity transformation [sR|t]
+               // 计算相似变换
                // In the stereo/RGBD case s=1
                if(ComputeSim3())
                {
                    // Perform loop fusion and pose graph optimization
+                   // loop 融合，位姿优化
                    CorrectLoop();
                }
             }
@@ -144,6 +148,7 @@ bool LoopClosing::DetectLoop()
     if(vpCandidateKFs.empty())
     {
     //  mpKeyFrameDB->add(mpCurrentKF);
+    // 小修改
         mpCacher->addKeyFrametoDB( mpCurrentKF );
         mvConsistentGroups.clear();
         mpCurrentKF->SetErase();
@@ -214,6 +219,7 @@ bool LoopClosing::DetectLoop()
 
     // Add Current Keyframe to database
     // mpKeyFrameDB->add(mpCurrentKF);
+    // 小修改
     mpCacher->addKeyFrametoDB( mpCurrentKF);
 
     if(mvpEnoughConsistentCandidates.empty())

@@ -49,12 +49,15 @@ namespace ORB_SLAM2 {
             cout << "RGB-D" << endl;
 
         //Check settings file
+        // 检查相机内参文件
         cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
         if (!fsSettings.isOpened()) {
             cerr << "Failed to open settings file at: " << strSettingsFile << endl;
             exit(-1);
         }
 
+        // 修改的东西，增加了cache
+        // cache:clientid, 加载ORB词典，创建KF数据库，创建Map，没个client都有一个线程
         mpCacher = new Cache();
 
         mpCacher->pClientId = clientId;
@@ -66,18 +69,21 @@ namespace ORB_SLAM2 {
         mpCacher->createMap();
 
         //Create Drawers. These are used by the Viewer
+        // 创建显示窗口，显示frame和map
         mpFrameDrawer = new FrameDrawer(mpCacher->getMpMap());
         mpMapDrawer = new MapDrawer(mpCacher->getMpMap(), strSettingsFile);
 
         //Initialize the Tracking thread
         //(it will live in the main thread of execution, the one that called this constructor)
+        // 创建三个线程，指针传递
         mpTracker = new Tracking(this, mpCacher, mpFrameDrawer, mpMapDrawer,
                                  strSettingsFile, mSensor);
 
         //Initialize the Local Mapping thread and launch
+        // Localmapping::Run调用
         mpLocalMapper = new LocalMapping(mpCacher, mSensor == MONOCULAR);
         mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run, mpLocalMapper);
-
+        // 实际上多出了两个线程，反而是client2server，server2client
         mptCacheUpdate = new thread(&ORB_SLAM2::Cache::runUpdateToServer, mpCacher);
 
         mptCacheSub = new thread(&ORB_SLAM2::Cache::runSubFromServer, mpCacher);
@@ -87,6 +93,8 @@ namespace ORB_SLAM2 {
         mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
 
         //Initialize the Viewer thread and launch
+        // 传入参数：this,图片显示，地图显示，跟踪对象，相机内参
+        // 这种写法不太友好
         mpViewer = new Viewer(this, mpFrameDrawer, mpMapDrawer, mpTracker, strSettingsFile);
         if (bUseViewer)
             mptViewer = new thread(&Viewer::Run, mpViewer);
@@ -94,6 +102,7 @@ namespace ORB_SLAM2 {
         mpTracker->SetViewer(mpViewer);
 
         //Set pointers between threads
+        //跟踪、局部地图、全局地图之间的互相联系
         mpTracker->SetLocalMapper(mpLocalMapper);
         mpTracker->SetLoopClosing(mpLoopCloser);
 
@@ -142,14 +151,16 @@ namespace ORB_SLAM2 {
 
         return mpTracker->GrabImageStereo(imLeft, imRight, timestamp);
     }
-
+    // Tracking线程的RGBD图像处理程序
     cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp) {
+        // 传感器是否为RGBD
         if (mSensor != RGBD) {
             cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
             exit(-1);
         }
 
         // Check mode change
+        // 检测SLAM模式的改变
         {
             unique_lock<mutex> lock(mMutexMode);
             if (mbActivateLocalizationMode) {
@@ -171,6 +182,7 @@ namespace ORB_SLAM2 {
         }
 
         // Check reset
+        // 检测是否需要重置
         {
             unique_lock<mutex> lock(mMutexReset);
             if (mbReset) {
@@ -178,8 +190,9 @@ namespace ORB_SLAM2 {
                 mbReset = false;
             }
         }
-
+        // 调用tracking GrabImageRGBD，将图像送入Tracking
         return mpTracker->GrabImageRGBD(im, depthmap, timestamp);
+        // 少了一部分，似乎只有在AR/ros_mono_ar.cc才调用
     }
 
     cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp) {

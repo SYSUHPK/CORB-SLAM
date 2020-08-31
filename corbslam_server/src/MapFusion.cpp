@@ -27,7 +27,7 @@ namespace CORBSLAM_SERVER{
         ifNullGlobalMap = true;
 
     }
-
+    // 回调函数，
     bool MapFusion::insertKeyFrameToMap(corbslam_client::corbslam_insert::Request &req,
                                         corbslam_client::corbslam_insert::Response &res){
 
@@ -57,6 +57,7 @@ namespace CORBSLAM_SERVER{
                             Tcw = Tcw * subMapTransM[ clientId ];
                             tKF->SetPose( Tcw );
                             tKF->ifFixed = false;
+                            // 添加到map和DB
                             globalMap->pCacher->AddKeyFrameToMap( tKF );
                             globalMap->pCacher->addKeyFrametoDB( tKF );
                         }
@@ -311,7 +312,7 @@ namespace CORBSLAM_SERVER{
         return true;
 
     }
-
+    // 发布
     void MapFusion::runPubTopic() {
 
         ROS_INFO("Thread runPubInsertTopic start...");
@@ -428,7 +429,7 @@ namespace CORBSLAM_SERVER{
         ROS_INFO( "Resent to client end, use time: %lfs", (double)(end_t - start_t)/(double)CLOCKS_PER_SEC );
 
     }
-
+    // 订阅并fuse
     void MapFusion::fuseSubMapToMap(){
 
         ros::Rate loop_rate(0.5);
@@ -771,7 +772,7 @@ namespace CORBSLAM_SERVER{
         serverMap[ mapId ] = subMap;
 
     }
-
+    // 加载ORB字典
     bool MapFusion::loadORBVocabulary(const string &strVocFile) {
 
         //Load ORB Vocabulary
@@ -789,12 +790,12 @@ namespace CORBSLAM_SERVER{
         return bVocLoad;
 
     }
-
+    // 创建KF DB，类似之前client的操作
     void MapFusion::createKeyFrameDatabase() {
         //create new global server Map
 
         this->mpKeyFrameDatabase = new KeyFrameDatabase( *mpVocabulary );
-
+        // 在这里新建了一个cache
         Cache * pCache = new Cache();
 
         pCache->mpVocabulary = mpVocabulary;

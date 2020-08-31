@@ -2,7 +2,7 @@
 // Created by lifu on 17-2-2.
 //
 
-
+// 新增
 #include "System.h"
 #include "Cache.h"
 #include "LightKeyFrame.h"
@@ -12,7 +12,7 @@
 #include <iomanip>
 #include "LightMapPoint.h"
 
-
+// 轻量级的地图点
 namespace ORB_SLAM2 {
 
     LightMapPoint::LightMapPoint() {

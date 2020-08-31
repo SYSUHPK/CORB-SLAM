@@ -45,12 +45,14 @@ public:
 
     ORB_SLAM2::System* mpSLAM;
 };
-
+// 事实上根本就没有修改这一部分
+// 似乎没有区分，其实就只是单纯作为client，和edgeslam相比，是相似的
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "RGBD");
     ros::start();
 
+    // 指令运行的参数和./不同
     if(argc != 3)
     {
         cerr << endl << "Usage: rosrun ORB_SLAM2 RGBD path_to_vocabulary path_to_settings" << endl;        
@@ -59,8 +61,9 @@ int main(int argc, char **argv)
     }    
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    // 调用System对象
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true);
-
+    // 读取RGBD和深度信息
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nh;
@@ -77,13 +80,14 @@ int main(int argc, char **argv)
     SLAM.Shutdown();
 
     // Save camera trajectory
+    // edgeslam没有这个
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     ros::shutdown();
 
     return 0;
 }
-
+// 转换RGB和Depth的数据格式，调用TrackRGBD
 void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD)
 {
     // Copy the ros image message to cv::Mat.
